@@ -1,101 +1,140 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import { Card } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Textarea } from '../components/ui/textarea';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
+import { UploadIcon } from '@radix-ui/react-icons';
+import { cn } from '../lib/utils';
+
+type ReasoningModel = 'oai-o1' | 'grok3' | 'claude-3.7' | 'deepseek-r1';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [text, setText] = useState('');
+  const [selectedModel, setSelectedModel] = useState<ReasoningModel>('oai-o1');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [urlPreview, setUrlPreview] = useState<string | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setText(value);
+
+    // Simple URL detection and preview
+    const urlMatch = value.match(/https?:\/\/[^\s]+/);
+    setUrlPreview(urlMatch ? urlMatch[0] : null);
+  };
+
+  const handleAnalyze = () => {
+    if (!text.trim()) return;
+    
+    setIsAnalyzing(true);
+    console.log('Analysis started');
+    // TODO: Implement analysis logic
+    setTimeout(() => setIsAnalyzing(false), 1000);
+  };
+
+  const models: { id: ReasoningModel; name: string; disabled?: boolean }[] = [
+    { id: 'oai-o1', name: 'OAI o1' },
+    { id: 'grok3', name: 'Grok3' },
+    { id: 'claude-3.7', name: 'Claude 3.7' },
+    { id: 'deepseek-r1', name: 'Deepseek R1', disabled: true },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+      <main className="container mx-auto px-4 py-16 max-w-5xl">
+        {/* Hero Section */}
+        <section className="text-center mb-16">
+          <h1 className="text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-600">
+            Fuzziness to Clarity
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-4">
+            Declutter articles, documents, or any text to extract key recommendations, reasoning, and evidence.
+          </p>
+          <p className="text-gray-500 dark:text-gray-400">
+            Our reasoning tool helps you understand the strength of arguments and detect logical fallacies.
+          </p>
+        </section>
+
+        {/* Input Section */}
+        <Card className="p-6 shadow-lg">
+          <div className="space-y-6">
+            {/* Model Selection */}
+            <div className="flex flex-wrap gap-2">
+              {models.map((model) => (
+                <TooltipProvider key={model.id}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={selectedModel === model.id ? 'default' : 'outline'}
+                        onClick={() => !model.disabled && setSelectedModel(model.id)}
+                        disabled={model.disabled}
+                        className={cn(
+                          'transition-all',
+                          selectedModel === model.id && 'ring-2 ring-blue-500'
+                        )}
+                      >
+                        {model.name}
+                      </Button>
+                    </TooltipTrigger>
+                    {model.disabled && (
+                      <TooltipContent>
+                        <p>Coming Soon</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
+              ))}
+            </div>
+
+            {/* Text Input */}
+            <div className="space-y-2">
+              <Textarea
+                placeholder="Paste text, articles, documents here."
+                className="min-h-[200px] resize-y"
+                value={text}
+                onChange={handleTextChange}
+              />
+              
+              {/* URL Preview */}
+              {urlPreview && (
+                <div className="mt-2 p-4 bg-gray-50 dark:bg-gray-800 rounded-md">
+                  <p className="text-sm text-gray-500">URL detected:</p>
+                  <a
+                    href={urlPreview}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline break-all"
+                  >
+                    {urlPreview}
+                  </a>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-full"
+                onClick={() => console.log('Upload clicked')}
+              >
+                <UploadIcon className="h-4 w-4" />
+              </Button>
+
+              <Button
+                onClick={handleAnalyze}
+                disabled={!text.trim() || isAnalyzing}
+                className="px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {isAnalyzing ? 'Analyzing...' : 'Analyse'}
+              </Button>
+            </div>
+          </div>
+        </Card>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
