@@ -68,6 +68,11 @@ export default function Home() {
   const [detectionConfidence, setDetectionConfidence] = useState<number | undefined>(undefined);
   const [detectionReasoning, setDetectionReasoning] = useState<string | undefined>(undefined);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [requestData, setRequestData] = useState<any>(null);
+  const [responseData, setResponseData] = useState<any>(null);
+  const [showUrlErrorDialog, setShowUrlErrorDialog] = useState(false);
+  const [urlErrorMessage, setUrlErrorMessage] = useState('');
+  const [urlContent, setUrlContent] = useState('');
 
   const { analyze, isLoading } = useAnalysis();
 
@@ -236,7 +241,10 @@ export default function Home() {
   const handleAnalyze = async () => {
     try {
       setIsAnalyzing(true);
-      setShowConfirmation(false);
+      setRequestData(null);
+      setResponseData(null);
+      setStatusMessage('');
+      setShowUrlErrorDialog(false);
       
       // Determine content source
       let contentToAnalyze = text;
@@ -253,8 +261,8 @@ export default function Home() {
         contentToAnalyze = documentPreview.preview || 'Document content';
       }
       
-      // Start the analysis process, but stop after detection
-      await analyze({
+      // Start the analysis process
+      const result = await analyze({
         content: contentToAnalyze,
         url: sourceUrl,
         onStatusUpdate: (status: string, message?: string) => {
@@ -265,34 +273,63 @@ export default function Home() {
           setDetectedContentType(type);
           setDetectionConfidence(confidence);
           setDetectionReasoning(reasoning);
-          
-          // Show confirmation dialog after detection
-          setShowConfirmation(true);
         },
-        stopAfterDetection: true
+        onRequestData: (data: any) => {
+          setRequestData(data);
+        },
+        onResponseData: (data: any) => {
+          setResponseData(data);
+        }
       });
-    } catch (error) {
+
+      // If we get here, the analysis was successful
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Navigate based on content type
+      if (result.contentType === 'story') {
+        router.push('/story');
+      } else {
+        router.push('/analysis');
+      }
+    } catch (error: any) {
       console.error('Error during analysis:', error);
       setIsAnalyzing(false);
+      
+      // Extract error message and suggestion from the response
+      let errorMessage = 'An error occurred during analysis';
+      let suggestion = '';
+      
+      if (error.response) {
+        try {
+          const errorData = await error.response.json();
+          errorMessage = errorData.error || errorMessage;
+          suggestion = errorData.suggestion || '';
+        } catch {
+          errorMessage = error.message || errorMessage;
+        }
+      } else {
+        errorMessage = error.message || errorMessage;
+      }
+      
+      // If it's a URL extraction error, show the dialog
+      if (isLinkMode && errorMessage.includes('URL')) {
+        setUrlErrorMessage(errorMessage);
+        setShowUrlErrorDialog(true);
+        setUrlContent(linkPreview?.url || '');
+      } else {
+        // Show error message to user
+        setStatusMessage(suggestion ? `${errorMessage}\n\n${suggestion}` : errorMessage);
+      }
     }
   };
 
-  // Handler for proceeding with analysis after confirmation
-  const handleProceed = () => {
-    setShowConfirmation(false);
-    
-    // Navigate based on detected content type
-    if (detectedContentType === 'story') {
-      router.push('/story');
-    } else {
-      router.push('/analysis');
-    }
-  };
-
-  // Handler for canceling analysis
-  const handleCancel = () => {
-    setShowConfirmation(false);
-    setIsAnalyzing(false);
+  // Add this function to handle switching to text mode
+  const handleSwitchToTextMode = () => {
+    setIsLinkMode(false);
+    setLinkPreview(null);
+    setUrlPreview(null);
+    setText('');
+    setShowUrlErrorDialog(false);
   };
 
   // Simple story detection function (placeholder for AI detection)
@@ -322,48 +359,15 @@ export default function Home() {
   // If analyzing, show loading screen
   if (isAnalyzing) {
     return (
-      <>
-        <AnalysisLoading 
-          status={analysisStatus} 
-          message={statusMessage} 
-          contentType={detectedContentType}
-          confidence={detectionConfidence}
-          reasoning={detectionReasoning}
-        />
-        
-        {/* Confirmation Dialog */}
-        <AlertDialog open={showConfirmation}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>
-                {detectedContentType === 'story' 
-                  ? 'This appears to be a story!' 
-                  : 'This appears to be an argument!'}
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                {detectedContentType === 'story' 
-                  ? 'We detected that this content is a narrative or story rather than an argument. Would you like to proceed with the story view?' 
-                  : 'We detected that this content contains arguments and reasoning. Would you like to proceed with the analysis?'}
-                
-                {detectionReasoning && (
-                  <div className="mt-4 p-3 bg-muted/30 rounded-lg border border-border/30">
-                    <p className="text-sm text-foreground/80">
-                      <span className="font-medium">Why we think this is a {detectedContentType}:</span><br />
-                      {detectionReasoning}
-                    </p>
-                  </div>
-                )}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleCancel}>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleProceed}>
-                {detectedContentType === 'story' ? 'View as Story' : 'Analyze Arguments'}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </>
+      <AnalysisLoading 
+        status={analysisStatus} 
+        message={statusMessage} 
+        contentType={detectedContentType}
+        confidence={detectionConfidence}
+        reasoning={detectionReasoning}
+        requestData={requestData}
+        responseData={responseData}
+      />
     );
   }
 
@@ -663,6 +667,30 @@ export default function Home() {
           </div>
         </Card>
       </main>
+      
+      {/* URL Error Dialog */}
+      <AlertDialog open={showUrlErrorDialog} onOpenChange={setShowUrlErrorDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unable to Access Content</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-4">
+              <p>{urlErrorMessage}</p>
+              <p className="font-medium">To analyze this content:</p>
+              <ol className="list-decimal list-inside space-y-2">
+                <li>Visit the URL in your browser</li>
+                <li>Select and copy the text you want to analyze</li>
+                <li>Return here and paste the text directly</li>
+              </ol>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowUrlErrorDialog(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSwitchToTextMode}>
+              Switch to Text Mode
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

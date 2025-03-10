@@ -6,7 +6,8 @@ interface AnalysisParams {
   url?: string | null;
   onStatusUpdate?: (status: string, message?: string) => void;
   onContentTypeDetected?: (type: 'story' | 'argument', confidence?: number, reasoning?: string) => void;
-  stopAfterDetection?: boolean;
+  onRequestData?: (data: any) => void;
+  onResponseData?: (data: any) => void;
 }
 
 interface AnalysisResult {
@@ -30,7 +31,8 @@ export function useAnalysis() {
     url, 
     onStatusUpdate, 
     onContentTypeDetected,
-    stopAfterDetection = false
+    onRequestData,
+    onResponseData
   }: AnalysisParams): Promise<AnalysisResult> => {
     setIsLoading(true);
     
@@ -54,7 +56,6 @@ export function useAnalysis() {
       // Process the stream data
       let contentType: 'story' | 'argument' = 'argument';
       let result: any = null;
-      let shouldStop = false;
 
       // Create a TextDecoder to decode the stream chunks
       const decoder = new TextDecoder();
@@ -62,11 +63,6 @@ export function useAnalysis() {
 
       // Read the stream
       while (true) {
-        // If we should stop after detection and we've already detected the content type
-        if (shouldStop) {
-          break;
-        }
-
         const { done, value } = await reader.read();
         if (done) break;
 
@@ -94,13 +90,16 @@ export function useAnalysis() {
                   data.confidence,
                   data.reasoning
                 );
-                
-                // If we should stop after detection, set the flag
-                if (stopAfterDetection) {
-                  contentType = data.contentType;
-                  shouldStop = true;
-                  break;
-                }
+              }
+
+              // Handle request data
+              if (data.requestData && onRequestData) {
+                onRequestData(data.requestData);
+              }
+
+              // Handle response data
+              if (data.responseData && onResponseData) {
+                onResponseData(data.responseData);
               }
               
               // Store content type and result when complete
