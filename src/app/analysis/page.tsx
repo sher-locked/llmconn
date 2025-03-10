@@ -73,13 +73,13 @@ export default function AnalysisReport() {
   const getSeverityColor = (severity: BiasType['severity']) => {
     switch (severity) {
       case 'low':
-        return 'bg-yellow-900/20 text-yellow-200 border-yellow-900/50';
+        return 'bg-yellow-400/10 text-yellow-200 border-yellow-400/20';
       case 'medium':
-        return 'bg-orange-900/20 text-orange-200 border-orange-900/50';
+        return 'bg-orange-400/10 text-orange-200 border-orange-400/20';
       case 'high':
-        return 'bg-red-900/20 text-red-200 border-red-900/50';
+        return 'bg-red-400/10 text-red-200 border-red-400/20';
       default:
-        return 'bg-gray-800/20 text-gray-200 border-gray-800/50';
+        return 'bg-gray-400/10 text-gray-200 border-gray-400/20';
     }
   };
 
@@ -87,27 +87,33 @@ export default function AnalysisReport() {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       {/* Header Section */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-4 text-secondary">Analysis Report</h1>
+        <h1 className="text-4xl font-bold mb-6 text-foreground">Analysis Report</h1>
         <div className="flex flex-wrap gap-3">
-          <Badge variant="outline" className="border-secondary text-secondary">2 Key Recommendations</Badge>
-          <Badge variant="outline" className="border-primary text-primary">Argument Strength: B+</Badge>
-          <Badge variant="outline" className="border-accent text-accent">Evidence Quality: Good</Badge>
+          <Badge variant="outline" className="border-primary/50 text-primary bg-primary/5 text-sm">
+            2 Key Recommendations
+          </Badge>
+          <Badge variant="outline" className="border-secondary/50 text-secondary bg-secondary/5 text-sm">
+            Argument Strength: B+
+          </Badge>
+          <Badge variant="outline" className="border-accent/50 text-accent bg-accent/5 text-sm">
+            Evidence Quality: Good
+          </Badge>
         </div>
       </div>
 
       {/* Key Recommendations Section */}
-      <Card className="mb-6 bg-card border-border">
+      <Card className="mb-6 bg-card border-border/50 shadow-lg shadow-primary/5">
         <CardHeader>
-          <CardTitle className="text-secondary">Key Recommendations</CardTitle>
+          <CardTitle className="text-xl text-foreground">Key Recommendations</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {recommendations.map((rec) => (
               <Collapsible key={rec.id}>
-                <CollapsibleTrigger className="flex items-center w-full text-left p-2 hover:bg-primary/5 rounded-md transition-colors">
+                <CollapsibleTrigger className="flex items-center w-full text-left p-3 hover:bg-primary/5 rounded-md transition-colors">
                   <span className="font-medium text-primary">{rec.title}</span>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="p-2 pl-4 text-muted-foreground">
+                <CollapsibleContent className="p-3 pl-6 text-muted-foreground bg-muted/50 rounded-md mt-2">
                   {rec.detail}
                 </CollapsibleContent>
               </Collapsible>
@@ -117,55 +123,55 @@ export default function AnalysisReport() {
       </Card>
 
       {/* Argument Quality Section */}
-      <Card className="mb-6 bg-card border-border">
+      <Card className="mb-6 bg-card border-border/50 shadow-lg shadow-primary/5">
         <CardHeader>
-          <CardTitle className="text-secondary">Argument Quality</CardTitle>
+          <CardTitle className="text-xl text-foreground">Argument Quality</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
             <div>
               <div className="flex justify-between mb-2">
-                <span>Overall Score</span>
-                <span className="font-semibold text-primary">85/100</span>
+                <span className="text-foreground/90">Overall Score</span>
+                <span className="font-semibold text-primary">{85}/100</span>
               </div>
-              <Progress value={85} indicatorClassName="bg-primary" />
+              <Progress value={85} className="h-2.5" indicatorClassName="bg-primary" />
             </div>
             
             <div className="grid gap-4">
               <div>
                 <div className="flex justify-between mb-2">
-                  <span>Reasoning</span>
-                  <span className="text-primary">90/100</span>
+                  <span className="text-foreground/90">Reasoning</span>
+                  <span className="text-primary">{90}/100</span>
                 </div>
-                <Progress value={90} indicatorClassName="bg-primary" />
+                <Progress value={90} className="h-2.5" indicatorClassName="bg-primary" />
               </div>
               <div>
                 <div className="flex justify-between mb-2">
-                  <span>Evidence</span>
-                  <span className="text-primary">82/100</span>
+                  <span className="text-foreground/90">Evidence</span>
+                  <span className="text-primary">{82}/100</span>
                 </div>
-                <Progress value={82} indicatorClassName="bg-primary" />
+                <Progress value={82} className="h-2.5" indicatorClassName="bg-primary" />
               </div>
               <div>
                 <div className="flex justify-between mb-2">
-                  <span>Fallacies</span>
-                  <span className="text-primary">88/100</span>
+                  <span className="text-foreground/90">Fallacies</span>
+                  <span className="text-primary">{88}/100</span>
                 </div>
-                <Progress value={88} indicatorClassName="bg-primary" />
+                <Progress value={88} className="h-2.5" indicatorClassName="bg-primary" />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <h4 className="font-medium text-secondary">Identified Biases</h4>
+            <div className="space-y-3">
+              <h4 className="font-medium text-lg text-foreground">Identified Biases</h4>
               {biases.map((bias, index) => (
-                <Alert key={index} className="bg-card border-border">
+                <Alert key={index} className="bg-muted border-border/50">
                   <AlertDescription>
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="font-medium text-primary">{bias.name}</span>
-                        <p className="text-sm text-muted-foreground">{bias.description}</p>
+                        <span className="font-medium text-foreground">{bias.name}</span>
+                        <p className="text-sm text-muted-foreground mt-1">{bias.description}</p>
                       </div>
-                      <Badge className={cn('ml-2 border', getSeverityColor(bias.severity))}>
+                      <Badge className={cn('ml-3 border', getSeverityColor(bias.severity))}>
                         {bias.severity}
                       </Badge>
                     </div>
@@ -178,16 +184,16 @@ export default function AnalysisReport() {
       </Card>
 
       {/* Alternative Explanations Section */}
-      <Card className="mb-6 bg-card border-border">
+      <Card className="mb-6 bg-card border-border/50 shadow-lg shadow-primary/5">
         <CardHeader>
-          <CardTitle className="text-secondary">Alternative Explanations & Pitfalls</CardTitle>
+          <CardTitle className="text-xl text-foreground">Alternative Explanations & Pitfalls</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {alternatives.map((alt) => (
-              <div key={alt.id} className="flex items-center justify-between p-3 bg-muted rounded-lg border border-border">
-                <p className="text-muted-foreground">{alt.explanation}</p>
-                <Badge variant="outline" className="border-accent text-accent">
+              <div key={alt.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border/50">
+                <p className="text-foreground/90 pr-4">{alt.explanation}</p>
+                <Badge variant="outline" className="border-accent/50 text-accent bg-accent/5 whitespace-nowrap">
                   {alt.likelihood}% likely
                 </Badge>
               </div>
@@ -199,11 +205,11 @@ export default function AnalysisReport() {
       {/* Footer Controls */}
       <div className="flex flex-col gap-6">
         <div className="flex gap-4">
-          <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 hover:text-primary">
+          <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary/10 hover:border-primary">
             <Share2Icon className="h-4 w-4 mr-2" />
             Share Analysis
           </Button>
-          <Button variant="outline" className="border-accent text-accent hover:bg-accent/10 hover:text-accent">
+          <Button variant="outline" className="border-accent/50 text-accent hover:bg-accent/10 hover:border-accent">
             <DownloadIcon className="h-4 w-4 mr-2" />
             Export Report
           </Button>
@@ -219,7 +225,7 @@ export default function AnalysisReport() {
                 'flex items-center gap-2',
                 isHelpful === true 
                   ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
-                  : 'border-primary text-primary hover:bg-primary/10'
+                  : 'border-primary/50 text-primary hover:bg-primary/10 hover:border-primary'
               )}
               onClick={() => setIsHelpful(true)}
             >
@@ -233,7 +239,7 @@ export default function AnalysisReport() {
                 'flex items-center gap-2',
                 isHelpful === false 
                   ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
-                  : 'border-primary text-primary hover:bg-primary/10'
+                  : 'border-primary/50 text-primary hover:bg-primary/10 hover:border-primary'
               )}
               onClick={() => setIsHelpful(false)}
             >
