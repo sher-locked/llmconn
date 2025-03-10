@@ -1,16 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { Card } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Textarea } from '../components/ui/textarea';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
+import { useRouter } from 'next/navigation';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { UploadIcon } from '@radix-ui/react-icons';
-import { cn } from '../lib/utils';
+import { cn } from '@/lib/utils';
 
 type ReasoningModel = 'oai-o1' | 'grok3' | 'claude-3.7' | 'deepseek-r1';
 
 export default function Home() {
+  const router = useRouter();
   const [text, setText] = useState('');
   const [selectedModel, setSelectedModel] = useState<ReasoningModel>('oai-o1');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -25,13 +27,21 @@ export default function Home() {
     setUrlPreview(urlMatch ? urlMatch[0] : null);
   };
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!text.trim()) return;
     
     setIsAnalyzing(true);
-    console.log('Analysis started');
-    // TODO: Implement analysis logic
-    setTimeout(() => setIsAnalyzing(false), 1000);
+    
+    try {
+      // TODO: Send analysis request to backend
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulating API call
+      
+      // Navigate to analysis page
+      router.push('/analysis');
+    } catch (error) {
+      console.error('Analysis failed:', error);
+      setIsAnalyzing(false);
+    }
   };
 
   const models: { id: ReasoningModel; name: string; disabled?: boolean }[] = [
