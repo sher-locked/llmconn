@@ -8,6 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { UploadIcon, LinkIcon, ExternalLinkIcon, XIcon, FileIcon, FileTextIcon, ImageIcon, FileType2Icon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { AnalysisLoading } from '@/components/AnalysisLoading';
+import { useAnalysis } from '@/hooks/useAnalysis';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 type ReasoningModel = 'oai-o1' | 'grok3' | 'claude-3.7' | 'deepseek-r1';
 
@@ -40,6 +43,12 @@ interface DocumentPreview {
   isLoading: boolean;
 }
 
+// Define types for the analysis status update
+interface StatusUpdate {
+  status: 'extracting' | 'detecting' | 'analyzing' | 'complete';
+  message?: string;
+}
+
 export default function Home() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -47,12 +56,20 @@ export default function Home() {
   const [isFocused, setIsFocused] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ReasoningModel>('oai-o1');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisStatus, setAnalysisStatus] = useState<'extracting' | 'detecting' | 'detected' | 'analyzing' | 'complete'>('extracting');
+  const [statusMessage, setStatusMessage] = useState<string>('');
   const [urlPreview, setUrlPreview] = useState<string | null>(null);
   const [linkPreview, setLinkPreview] = useState<LinkPreview | null>(null);
   const [isLinkMode, setIsLinkMode] = useState(false);
   const [isDocumentMode, setIsDocumentMode] = useState(false);
   const [documentPreview, setDocumentPreview] = useState<DocumentPreview | null>(null);
   const [question, setQuestion] = useState('');
+  const [detectedContentType, setDetectedContentType] = useState<'story' | 'argument' | undefined>(undefined);
+  const [detectionConfidence, setDetectionConfidence] = useState<number | undefined>(undefined);
+  const [detectionReasoning, setDetectionReasoning] = useState<string | undefined>(undefined);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
+  const { analyze, isLoading } = useAnalysis();
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
@@ -217,25 +234,65 @@ export default function Home() {
   };
 
   const handleAnalyze = async () => {
-    setIsAnalyzing(true);
-    
     try {
-      // Simulate analysis delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      setIsAnalyzing(true);
+      setShowConfirmation(false);
       
-      // Simple story detection (in a real app, this would be done by an AI model)
-      const isStory = detectIfStory(text);
+      // Determine content source
+      let contentToAnalyze = text;
+      let sourceUrl = null;
       
-      // Navigate to appropriate page
-      if (isStory) {
-        router.push('/story');
-      } else {
-        router.push('/analysis');
+      // If in link mode, use the URL
+      if (isLinkMode && linkPreview) {
+        sourceUrl = linkPreview.url;
+        setAnalysisStatus('extracting');
+        setStatusMessage('Extracting content from URL...');
+      } 
+      // If in document mode, use the document content
+      else if (isDocumentMode && documentPreview) {
+        contentToAnalyze = documentPreview.preview || 'Document content';
       }
+      
+      // Start the analysis process, but stop after detection
+      await analyze({
+        content: contentToAnalyze,
+        url: sourceUrl,
+        onStatusUpdate: (status: string, message?: string) => {
+          setAnalysisStatus(status as 'extracting' | 'detecting' | 'detected' | 'analyzing' | 'complete');
+          if (message) setStatusMessage(message);
+        },
+        onContentTypeDetected: (type: 'story' | 'argument', confidence?: number, reasoning?: string) => {
+          setDetectedContentType(type);
+          setDetectionConfidence(confidence);
+          setDetectionReasoning(reasoning);
+          
+          // Show confirmation dialog after detection
+          setShowConfirmation(true);
+        },
+        stopAfterDetection: true
+      });
     } catch (error) {
       console.error('Error during analysis:', error);
       setIsAnalyzing(false);
     }
+  };
+
+  // Handler for proceeding with analysis after confirmation
+  const handleProceed = () => {
+    setShowConfirmation(false);
+    
+    // Navigate based on detected content type
+    if (detectedContentType === 'story') {
+      router.push('/story');
+    } else {
+      router.push('/analysis');
+    }
+  };
+
+  // Handler for canceling analysis
+  const handleCancel = () => {
+    setShowConfirmation(false);
+    setIsAnalyzing(false);
   };
 
   // Simple story detection function (placeholder for AI detection)
@@ -261,6 +318,54 @@ export default function Home() {
     // and at least 2 story indicators, classify as a story
     return storyMatches > argumentMatches && storyMatches >= 2;
   };
+
+  // If analyzing, show loading screen
+  if (isAnalyzing) {
+    return (
+      <>
+        <AnalysisLoading 
+          status={analysisStatus} 
+          message={statusMessage} 
+          contentType={detectedContentType}
+          confidence={detectionConfidence}
+          reasoning={detectionReasoning}
+        />
+        
+        {/* Confirmation Dialog */}
+        <AlertDialog open={showConfirmation}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {detectedContentType === 'story' 
+                  ? 'This appears to be a story!' 
+                  : 'This appears to be an argument!'}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {detectedContentType === 'story' 
+                  ? 'We detected that this content is a narrative or story rather than an argument. Would you like to proceed with the story view?' 
+                  : 'We detected that this content contains arguments and reasoning. Would you like to proceed with the analysis?'}
+                
+                {detectionReasoning && (
+                  <div className="mt-4 p-3 bg-muted/30 rounded-lg border border-border/30">
+                    <p className="text-sm text-foreground/80">
+                      <span className="font-medium">Why we think this is a {detectedContentType}:</span><br />
+                      {detectionReasoning}
+                    </p>
+                  </div>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={handleCancel}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleProceed}>
+                {detectedContentType === 'story' ? 'View as Story' : 'Analyze Arguments'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

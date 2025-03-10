@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -15,12 +15,47 @@ import {
   ReaderIcon
 } from '@radix-ui/react-icons';
 import { cn } from '@/lib/utils';
+import { AnalysisLoading } from '@/components/AnalysisLoading';
+import { StoryResponse } from '@/lib/openai';
 
 export default function StoryView() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [storyData, setStoryData] = useState<StoryResponse | null>(null);
+  
+  // Load story data from sessionStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedData = sessionStorage.getItem('storyData');
+      if (storedData) {
+        try {
+          const parsedData = JSON.parse(storedData);
+          setStoryData(parsedData);
+          
+          // Update story content with the parsed data
+          setStoryContent({
+            title: parsedData.title || "Untitled Story",
+            subtitle: parsedData.subtitle || "A narrative journey",
+            summary: parsedData.summary || "This is a story that was detected in your content.",
+            source: {
+              type: "document",
+              url: "https://example.com/story-content",
+              name: "Story Content",
+              date: new Date().toLocaleDateString()
+            },
+            mood: parsedData.mood || "whimsical",
+            readingTime: parsedData.readingTime || "5 min read"
+          });
+        } catch (error) {
+          console.error('Error parsing story data:', error);
+        }
+      }
+      setIsLoading(false);
+    }
+  }, []);
   
   // Mock data for story content
-  const [storyContent] = useState({
+  const [storyContent, setStoryContent] = useState({
     title: "The Journey Through the Enchanted Forest",
     subtitle: "A tale of discovery, friendship, and unexpected magic",
     summary: "In this heartwarming story, a young traveler embarks on a journey through an ancient forest, encountering magical creatures and forming unexpected bonds. The narrative weaves together themes of courage, friendship, and the beauty of the natural world.",
@@ -68,6 +103,11 @@ export default function StoryView() {
         return 'from-amber-400/20 via-purple-400/10 to-transparent';
     }
   };
+
+  // Show loading state while fetching data
+  if (isLoading) {
+    return <AnalysisLoading status="complete" message="Preparing your story..." />;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { AnalysisLoading } from '@/components/AnalysisLoading';
+import { AnalysisResponse } from '@/lib/openai';
 
 type RecommendationType = {
   id: string;
@@ -49,8 +51,24 @@ type AlternativeType = {
 
 export default function AnalysisReport() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [analysisData, setAnalysisData] = useState<AnalysisResponse | null>(null);
+  
+  // State for document synthesis
+  const [documentSynthesis, setDocumentSynthesis] = useState({
+    title: "Software Architecture Review",
+    subtitle: "Critical evaluation of the proposed system design with security and scalability considerations",
+    summary: "This document presents a comprehensive review of the current software architecture. It identifies several critical vulnerabilities in the security model and suggests improvements for better scalability and maintainability.",
+    source: {
+      type: "document" as const, // or "link"
+      url: "https://example.com/architecture-review.pdf",
+      name: "architecture-review.pdf",
+      date: "June 15, 2023"
+    }
+  });
 
-  const [recommendations] = useState<RecommendationType[]>([
+  // State for recommendations, biases, and alternatives
+  const [recommendations, setRecommendations] = useState<RecommendationType[]>([
     {
       id: '1',
       title: 'Implement data validation framework',
@@ -75,7 +93,7 @@ export default function AnalysisReport() {
     },
   ]);
 
-  const [biases] = useState<BiasType[]>([
+  const [biases, setBiases] = useState<BiasType[]>([
     {
       name: 'Confirmation Bias',
       description: 'Evidence seems cherry-picked to support the main argument',
@@ -88,7 +106,7 @@ export default function AnalysisReport() {
     },
   ]);
 
-  const [alternatives] = useState<AlternativeType[]>([
+  const [alternatives, setAlternatives] = useState<AlternativeType[]>([
     {
       id: '1',
       explanation: 'Consider cloud-native alternatives for better scalability',
@@ -101,20 +119,41 @@ export default function AnalysisReport() {
     },
   ]);
 
-  const [isHelpful, setIsHelpful] = useState<boolean | null>(null);
-
-  // Mock data for document synthesis
-  const [documentSynthesis] = useState({
-    title: "Software Architecture Review",
-    subtitle: "Critical evaluation of the proposed system design with security and scalability considerations",
-    summary: "This document presents a comprehensive review of the current software architecture. It identifies several critical vulnerabilities in the security model and suggests improvements for better scalability and maintainability.",
-    source: {
-      type: "document", // or "link"
-      url: "https://example.com/architecture-review.pdf",
-      name: "architecture-review.pdf",
-      date: "June 15, 2023"
+  // Load analysis data from sessionStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedData = sessionStorage.getItem('analysisData');
+      if (storedData) {
+        try {
+          const parsedData = JSON.parse(storedData);
+          setAnalysisData(parsedData);
+          
+          // Initialize state with the parsed data
+          setRecommendations(parsedData.recommendations || []);
+          setBiases(parsedData.biases || []);
+          setAlternatives(parsedData.alternatives || []);
+          
+          // Set document synthesis data
+          setDocumentSynthesis({
+            title: parsedData.title || "Analysis Report",
+            subtitle: parsedData.subtitle || "Detailed breakdown of the content's reasoning and evidence",
+            summary: parsedData.summary || "This analysis examines the structure, evidence, and reasoning of the provided content.",
+            source: {
+              type: "document" as const,
+              url: "https://example.com/analyzed-content",
+              name: "Analyzed Content",
+              date: new Date().toLocaleDateString()
+            }
+          });
+        } catch (error) {
+          console.error('Error parsing analysis data:', error);
+        }
+      }
+      setIsLoading(false);
     }
-  });
+  }, []);
+
+  const [isHelpful, setIsHelpful] = useState<boolean | null>(null);
 
   // Analysis metrics
   const [analysisMetrics] = useState({
@@ -268,6 +307,11 @@ export default function AnalysisReport() {
   const handleBackToHome = () => {
     router.push('/');
   };
+
+  // Show loading state while fetching data
+  if (isLoading) {
+    return <AnalysisLoading status="complete" message="Preparing your analysis..." />;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
