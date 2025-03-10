@@ -223,12 +223,43 @@ export default function Home() {
       // Simulate analysis delay
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Navigate to analysis page
-      router.push('/analysis');
+      // Simple story detection (in a real app, this would be done by an AI model)
+      const isStory = detectIfStory(text);
+      
+      // Navigate to appropriate page
+      if (isStory) {
+        router.push('/story');
+      } else {
+        router.push('/analysis');
+      }
     } catch (error) {
       console.error('Error during analysis:', error);
       setIsAnalyzing(false);
     }
+  };
+
+  // Simple story detection function (placeholder for AI detection)
+  const detectIfStory = (content: string): boolean => {
+    // This is a simplified detection - in a real app, you would use NLP or AI
+    const storyIndicators = [
+      'once upon a time', 'story', 'tale', 'adventure', 'journey', 
+      'character', 'fiction', 'narrative', 'novel', 'fantasy'
+    ];
+    
+    const argumentIndicators = [
+      'argument', 'evidence', 'claim', 'reason', 'therefore', 
+      'conclusion', 'analysis', 'research', 'study', 'data'
+    ];
+    
+    const contentLower = content.toLowerCase();
+    
+    // Count matches for each category
+    const storyMatches = storyIndicators.filter(word => contentLower.includes(word)).length;
+    const argumentMatches = argumentIndicators.filter(word => contentLower.includes(word)).length;
+    
+    // For demo purposes, if there are more story indicators than argument indicators
+    // and at least 2 story indicators, classify as a story
+    return storyMatches > argumentMatches && storyMatches >= 2;
   };
 
   return (
