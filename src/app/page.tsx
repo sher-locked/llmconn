@@ -52,23 +52,23 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-16 max-w-5xl">
         {/* Hero Section */}
         <section className="text-center mb-16">
-          <h1 className="text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-600">
+          <h1 className="text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-secondary to-primary">
             Fuzziness to Clarity
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-4">
+          <p className="text-xl text-foreground/90 mb-4">
             Declutter articles, documents, or any text to extract key recommendations, reasoning, and evidence.
           </p>
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-foreground/70">
             Our reasoning tool helps you understand the strength of arguments and detect logical fallacies.
           </p>
         </section>
 
         {/* Input Section */}
-        <Card className="p-6 shadow-lg">
+        <Card className="p-6 border-border bg-card">
           <div className="space-y-6">
             {/* Model Selection */}
             <div className="flex flex-wrap gap-2">
@@ -81,8 +81,8 @@ export default function Home() {
                         onClick={() => !model.disabled && setSelectedModel(model.id)}
                         disabled={model.disabled}
                         className={cn(
-                          'transition-all',
-                          selectedModel === model.id && 'ring-2 ring-blue-500'
+                          'transition-all border-primary text-primary hover:bg-primary/10',
+                          selectedModel === model.id && 'bg-primary text-primary-foreground hover:bg-primary/90'
                         )}
                       >
                         {model.name}
@@ -102,20 +102,20 @@ export default function Home() {
             <div className="space-y-2">
               <Textarea
                 placeholder="Paste text, articles, documents here."
-                className="min-h-[200px] resize-y"
+                className="min-h-[200px] resize-y bg-background border-border text-foreground placeholder:text-muted-foreground"
                 value={text}
                 onChange={handleTextChange}
               />
               
               {/* URL Preview */}
               {urlPreview && (
-                <div className="mt-2 p-4 bg-gray-50 dark:bg-gray-800 rounded-md">
-                  <p className="text-sm text-gray-500">URL detected:</p>
+                <div className="mt-2 p-4 bg-muted rounded-md border border-border">
+                  <p className="text-muted-foreground">URL detected:</p>
                   <a
                     href={urlPreview}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline break-all"
+                    className="text-primary hover:text-primary/90 hover:underline break-all"
                   >
                     {urlPreview}
                   </a>
@@ -128,7 +128,7 @@ export default function Home() {
               <Button
                 variant="outline"
                 size="icon"
-                className="rounded-full"
+                className="rounded-full border-secondary text-secondary hover:bg-secondary/10"
                 onClick={() => console.log('Upload clicked')}
               >
                 <UploadIcon className="h-4 w-4" />
@@ -137,7 +137,10 @@ export default function Home() {
               <Button
                 onClick={handleAnalyze}
                 disabled={!text.trim() || isAnalyzing}
-                className="px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white"
+                className={cn(
+                  "px-8 py-2 bg-primary text-primary-foreground hover:bg-primary/90",
+                  isAnalyzing && "opacity-50 cursor-not-allowed"
+                )}
               >
                 {isAnalyzing ? 'Analyzing...' : 'Analyse'}
               </Button>
