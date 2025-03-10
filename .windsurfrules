@@ -1,0 +1,38 @@
+{
+  "include": [
+    "src/**/*.{ts,tsx,js,jsx}",
+    "prisma/**/*.prisma",
+    "*.config.{js,ts,mjs}",
+    ".env*"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next",
+    "dist",
+    "build",
+    "**/*.test.{ts,tsx,js,jsx}"
+  ],
+  "maxFilesToSearch": 500,
+  "maxFileSize": 1000000,
+  "maxLineLength": 120,
+  "tabWidth": 2,
+  "useTabs": false,
+  "lineEnding": "lf",
+  "preferredQuotes": "double",
+  "typescript": {
+    "strict": true,
+    "allowJs": true,
+    "esModuleInterop": true
+  },
+  "ai": {
+    "contextWindow": {
+      "beforeLines": 50,
+      "afterLines": 50
+    },
+    "editBehavior": {
+      "autoImport": true,
+      "formatOnEdit": true,
+      "validateTypes": true
+    }
+  }
+}

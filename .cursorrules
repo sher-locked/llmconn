@@ -1,0 +1,72 @@
+{
+  "language": {
+    "typescript": {
+      "formatter": "prettier",
+      "tabSize": 2,
+      "bracketSpacing": true,
+      "semi": true,
+      "trailingComma": "es5"
+    }
+  },
+  "folders": {
+    "src/app": "Next.js pages and API routes",
+    "src/components": "Reusable React components",
+    "src/lib": "Shared utilities and configurations",
+    "src/services": {
+      "description": "Business logic and external services",
+      "subfolders": {
+        "api": "External API integrations",
+        "db": "Database operations and Prisma client",
+        "ai": "AI SDK implementations"
+      }
+    },
+    "src/types": "TypeScript type definitions",
+    "src/styles": "CSS and Tailwind styles",
+    "prisma": "Database schema and migrations",
+    "public": "Static assets and images"
+  },
+  "patterns": {
+    "components": "src/components/**/*.{tsx,jsx}",
+    "pages": "src/app/**/{page,layout,loading,error}.tsx",
+    "api": "src/app/api/**/route.ts",
+    "styles": "**/*.css",
+    "tests": "**/*.test.{ts,tsx}",
+    "database": "prisma/**/*.prisma"
+  },
+  "suggestions": {
+    "imports": {
+      "react": ["useState", "useEffect", "useCallback", "useMemo"],
+      "@supabase/supabase-js": ["createClient", "SupabaseClient"],
+      "ai": ["StreamingTextResponse", "experimental_StreamData"],
+      "@/components": ["*"],
+      "@/lib": ["*"],
+      "zod": ["z"],
+      "@radix-ui/react-*": ["*"],
+      "class-variance-authority": ["cva"],
+      "tailwind-merge": ["twMerge"],
+      "clsx": ["clsx", "cn"]
+    }
+  },
+  "conventions": {
+    "components": {
+      "prefix": "",
+      "suffix": ".tsx",
+      "naming": "PascalCase"
+    },
+    "hooks": {
+      "prefix": "use",
+      "suffix": ".ts",
+      "naming": "camelCase"
+    },
+    "types": {
+      "prefix": "",
+      "suffix": ".d.ts",
+      "naming": "PascalCase"
+    }
+  },
+  "documentation": {
+    "components": "Include props interface and usage example",
+    "api": "Document request/response types and authentication",
+    "database": "Document relationships and constraints"
+  }
+}
